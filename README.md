@@ -6,15 +6,39 @@ This is a work-in-progress proposal for a standardised, minimal, simple and
 universal way to handle errors in the Pawn language.
 
 The concept is similar to how Go and simple C programs handle errors: when an
-error is raised with `Error()`, a non-zero `Error:` value is returned with the
-intention that it be returned directly from the enclosing function. Meanwhile,
-at the call site of the function in question, its return value is checked and if
-it's non-zero, the error information can be extracted and handled. Finally, the
-error is marked handled with `Handled()`.
+error is raised with `Error()`:
+
+```pawn
+Error:thisFunctionFails() {
+    return Error("failed to be true :(");
+}
+```
+
+a non-zero `Error:` value is returned with the intention that it be returned
+directly from the enclosing function. Meanwhile, at the call site of the
+function in question:
+
+```pawn
+new Error:e = thisFunctionFails();
+if(e) {
+    err("something went wrong, but we fixed it!",
+        _e(e)); // not implemented but possible logger type for errors
+    Handled(e);
+}
+```
+
+its return value is checked and if it's non-zero, the error information can be
+extracted and handled. Finally, the error is marked handled with `Handled()`.
 
 The proposal features the usage of a tagged scope destructor so if an `Error:`
 value goes unhandled, when it leaves scope an error message is printed along
-with a backtrace. This means that uncaught errors are handled.
+with a backtrace. This means that uncaught errors are handled:
+
+```pawn
+    e = thisFunctionFails();
+    // e exits scope without being handled, print a nasty "panic" message
+}
+```
 
 There is still much to do before this can be used in production. My aim is to
 create a very simple API - which in my opinion is all that is necessary given
