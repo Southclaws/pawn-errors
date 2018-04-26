@@ -5,6 +5,10 @@
 This is a work-in-progress proposal for a standardised, minimal, simple and
 universal way to handle errors in the Pawn language.
 
+There exists a more complex error handling solution which implements try/catch
+exceptions. This library aims to be a simple, pure Pawn (no asm) alternative
+which does not introduce new syntax.
+
 The concept is similar to how Go and simple C programs handle errors: when an
 error is raised with `Error()`:
 
