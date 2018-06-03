@@ -7,7 +7,13 @@
 		"sampctl/samp-stdlib",
 		"Zeex/samp-plugin-crashdetect:v4.19"
 	],
+	"dev_dependencies": [
+		"pawn-lang/YSI-Includes"
+	],
 	"runtime": {
-		"mode": "main"
+		"version": "0.3.7",
+		"mode": "y_testing",
+		"rcon_password": "password",
+		"port": 7777
 	}
 }

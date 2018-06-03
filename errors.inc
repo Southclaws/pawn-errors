@@ -13,6 +13,12 @@
 #include <crashdetect>
 
 
+// PRINT_ON_ERROR if set will make each Error() call also print the error
+#if defined PRINT_ON_ERROR
+    #define _PRINT_ON_ERROR
+#endif
+
+// MAX_BUBBLED_ERRORS sets the maximum error depth
 #if !defined MAX_BUBBLED_ERRORS
     #define MAX_BUBBLED_ERRORS (16)
 #endif
@@ -99,6 +105,10 @@ stock Error:Error(what[]) {
         ErrorState[Count - 1] = 0;
     }
 
+    #if defined _PRINT_ON_ERROR
+    printf("[ERROR] %d %s", Count, what);
+    #endif
+
     return Error:Count;
 }
 
@@ -106,13 +116,14 @@ stock Handled(Error:e) {
     if(Count == 0) {
         print("attempt to handle non-present error");
         PrintAmxBacktrace();
+        return 1;
     }
 
     ErrorBuffer[0] = EOS;
     ErrorState[_:e] = 0;
     Count = 0;
 
-    return;
+    return 0;
 }
 
 stock GetErrorCount() {
