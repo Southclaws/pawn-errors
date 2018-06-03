@@ -5,6 +5,9 @@
 	"output": "test.amx",
 	"dependencies": [
 		"sampctl/samp-stdlib",
-		"Zeex/samp-plugin-crashdetect"
-	]
+		"Zeex/samp-plugin-crashdetect:v4.19"
+	],
+	"runtime": {
+		"mode": "main"
+	}
 }

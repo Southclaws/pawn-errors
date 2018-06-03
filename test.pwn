@@ -4,7 +4,7 @@
 
 Error:failsOnTrue(bool:fails) {
 	if(fails) {
-		return Error("failed to be true :(");
+		return Error("i failed :(");
 	}
 
 	return NoError;
@@ -18,18 +18,59 @@ Error:failsOn5(input) {
 
 	new Error:e = failsOnTrue(fails);
 	if(e) {
-		return Error("failed to do important thing");
+		return Error("value was not equal to 5");
+	}
+
+	return NoError;
+}
+
+Error:failsOnOdd(input) {
+	new bool:fails;
+	if(input % 2 != 0) {
+		fails = true;
+	}
+
+	new Error:e = failsOnTrue(fails);
+	if(e) {
+		return Error("value was not odd");
 	}
 
 	return NoError;
 }
 
 main() {
-	new Error:e;
+	print("\n\nStarting errors demo\n\n");
+	{
+		new Error:e;
 
-	e = failsOn5(5);
-
-	if(e) {
-		Handled(e);
+		e = failsOn5(5);
+		if(e) {
+			new es[512];
+			GetError(es);
+			printf(
+				"%d errors occurred:\n%s\nBut I've handled them, so don't worry!",
+				GetErrorCount(), es);
+			Handled(e);
+		}
 	}
+
+	{
+		new Error:e;
+
+		e = failsOnOdd(5);
+		// unhandled - prints a backtrace
+	}
+
+	// {
+	// 	new Error:e;
+
+	// 	e += failsOn5(5);
+	// 	e += failsOn5(4);
+	// 	e += failsOn5(5);
+	// 	if(e) {
+	// 		new es[512];
+	// 		GetError(es);
+	// 		printf("errs: %d\n[%s]", GetErrorCount(), es);
+	// 	}
+	// }
 }
