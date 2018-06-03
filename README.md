@@ -2,59 +2,20 @@
 
 [![sampctl](https://shields.southcla.ws/badge/sampctl-pawn--errors-2f2f2f.svg?style=for-the-badge)](https://github.com/Southclaws/pawn-errors)
 
-This is a work-in-progress proposal for a standardised, minimal, simple and
-universal way to handle errors in the Pawn language.
+This is a simple library for dealing with function-level errors and making sure
+unhandled errors don't get quietly ignored.
 
 There exists a more complex error handling solution which implements try/catch
 exceptions. This library aims to be a simple, pure Pawn (no asm) alternative
 which does not introduce new syntax.
 
-The concept is similar to how Go and simple C programs handle errors: when an
-error is raised with `Error()`:
+The concept is similar to how Go and simple C programs handle errors: functions
+should return an _error value_ indicating success or failure. If the value is
+zero, everything went smoothly but if the error is anything but zero, an error
+occurred.
 
-```pawn
-Error:thisFunctionFails() {
-    return Error("failed to be true :(");
-}
-```
-
-a non-zero `Error:` value is returned with the intention that it be returned
-directly from the enclosing function. Meanwhile, at the call site of the
-function in question:
-
-```pawn
-new Error:e = thisFunctionFails();
-if(e) {
-    err("something went wrong, but we fixed it!",
-        _e(e)); // not implemented but possible logger type for errors
-    Handled(e);
-}
-```
-
-its return value is checked and if it's non-zero, the error information can be
-extracted and handled. Finally, the error is marked handled with `Handled()`.
-
-The proposal features the usage of a tagged scope destructor so if an `Error:`
-value goes unhandled, when it leaves scope an error message is printed along
-with a backtrace. This means that uncaught errors are handled:
-
-```pawn
-    e = thisFunctionFails();
-    // e exits scope without being handled, print a nasty "panic" message
-}
-```
-
-There is still much to do before this can be used in production. My aim is to
-create a very simple API - which in my opinion is all that is necessary given
-that Pawn is procedural and single-threaded. Once an error is generated in a
-function, it can be handled at the function call site, it's rare that you ever
-get into a situation where you'll have multiple unhandled errors, so this
-library doesn't provide that functionality however it may be implemented by
-simply appending error strings to the internal string buffer, similar to how the
-Go errors package provides `wrap()` to enclose an error with additional
-contextual information then pass its value further up the call stack.
-
-This library will also make use of crashdetect tracebacks in error information.
+This library enhances that pattern through the use of tags, destructors and a
+simple raise-handle model that fits the simple procedural nature of Pawn.
 
 ## Installation
 
@@ -72,13 +33,39 @@ Include in your code and begin using the library:
 
 ## Usage
 
-See `test.pwn` for an example of usage. Once the API is stable, more thorough
-documentation will be added here.
+Functions that could potentially fail should be tagged `Error:` and either
+return `NoError` or call `Error()`. For example, this is a function that always
+fails:
+
+```pawn
+Error:thisFunctionFails() {
+    return Error("I always fail!");
+}
+```
+
+a non-zero `Error:` value is returned. This return value should be checked at
+the call site, this can simply be done by checking for truthiness - `e` is
+anything other than 0, that means something went wrong:
+
+```pawn
+new Error:e = thisFunctionFails();
+if(e) {
+    printf("ERROR: thisFunctionFails has failed");
+    Handled(e);
+}
+```
+
+Finally, the error is marked handled with `Handled()`. This will erase the
+current stack of errors and indicates that the script has returned to a safe
+state.
+
+If a single error or a stack of errors is unhandled, the error information will
+be printed once the current stack has returned (in other words, once the current
+callback has finished).
 
 ## Testing
 
-Currently, the tests are simply a `main` and some function calls, check out the
-code in `test.pwn` and run the package to see how it works.
+To run the tests:
 
 ```bash
 sampctl package run

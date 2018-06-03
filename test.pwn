@@ -1,4 +1,5 @@
-#define PRINT_ON_ERROR
+#define NO_BACKTRACES
+#define DEBUG_PRINTS
 #include "errors.inc"
 
 #define RUN_TESTS
@@ -52,14 +53,17 @@ Test:ErrorDepth1() {
 
 		new
 			gotError[512],
-			wantError[] = "F:\\Projects\\pawn-errors\\test.pwn:9 (runtime) i failed :(";
-		GetError(gotError);
-		ASSERT(!strcmp(gotError, wantError));
-		print(gotError);
+			wantFind[] = "test.pwn:11 (warning) #1: i failed :(\n";
+		GetErrors(gotError);
+		printf("'%s'", gotError);
+		ASSERT(strfind(gotError, wantFind) != -1);
 
 		ASSERT(Handled(e) == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
+
+	ASSERT(GetErrorCount() == 0);
+	ASSERT(Handled(Error:0) == 1);
 }
 
 Test:ErrorDepth2() {
@@ -74,14 +78,17 @@ Test:ErrorDepth2() {
 
 		new
 			gotError[512],
-			wantError[] = "F:\\Projects\\pawn-errors\\test.pwn:9 (runtime) i failed :(\nF:\\Projects\\pawn-errors\\test.pwn:23 (runtime) value was not equal to 5";
-		GetError(gotError);
-		ASSERT(!strcmp(gotError, wantError));
+			wantFind[] = "test.pwn:25 (warning) #2: value was not equal to 5";
+		GetErrors(gotError);
 		print(gotError);
+		ASSERT(strfind(gotError, wantFind) != -1);
 
 		ASSERT(Handled(e) == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
+
+	ASSERT(GetErrorCount() == 0);
+	ASSERT(Handled(Error:0) == 1);
 }
 
 Test:ErrorDepth3() {
@@ -96,14 +103,17 @@ Test:ErrorDepth3() {
 
 		new
 			gotError[512],
-			wantError[] = "F:\\Projects\\pawn-errors\\test.pwn:9 (runtime) i failed :(\nF:\\Projects\\pawn-errors\\test.pwn:23 (runtime) value was not equal to 5\nF:\\Projects\\pawn-errors\\test.pwn:37 (runtime) value was not odd";
-		GetError(gotError);
-		ASSERT(!strcmp(gotError, wantError));
+			wantFind[] = "test.pwn:39 (warning) #3: value was not odd\n";
+		GetErrors(gotError);
 		print(gotError);
+		ASSERT(strfind(gotError, wantFind) != -1);
 
 		ASSERT(Handled(e) == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
+
+	ASSERT(GetErrorCount() == 0);
+	ASSERT(Handled(Error:0) == 1);
 }
 
 Test:ErrorUnhandled() {
@@ -117,13 +127,10 @@ Test:ErrorUnhandled() {
 		ASSERT(count == 1);
 
 		new
-			gotError[512],
-			wantError[] = "F:\\Projects\\pawn-errors\\test.pwn:9 (runtime) i failed :(";
-		GetError(gotError);
-		ASSERT(!strcmp(gotError, wantError));
+			gotError[512];
+		GetErrors(gotError);
 		print(gotError);
 	}
 
-	ASSERT(Handled(Error:0) == 1);
-	ASSERT(GetErrorCount() == 0);
+	ASSERT(GetErrorCount() != 0);
 }
