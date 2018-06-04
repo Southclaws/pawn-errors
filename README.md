@@ -33,35 +33,169 @@ Include in your code and begin using the library:
 
 ## Usage
 
+### Basic Errors
+
 Functions that could potentially fail should be tagged `Error:` and either
-return `NoError` or call `Error()`. For example, this is a function that always
+return `NoError()` or `Error()`. For example, this is a function that always
 fails:
 
 ```pawn
 Error:thisFunctionFails() {
-    return Error("I always fail!");
+    return Error(1, "I always fail!");
 }
 ```
 
-a non-zero `Error:` value is returned. This return value should be checked at
-the call site, this can simply be done by checking for truthiness - `e` is
-anything other than 0, that means something went wrong:
+The first argument is an error code, this is the actual value that is returned
+from the function, it can be used by the call site to determine exactly went
+wrong. You can optionally export named constants to simplify the error checking
+process.
+
+This return value should be checked at the call site using `IsError`:
 
 ```pawn
 new Error:e = thisFunctionFails();
-if(e) {
+if(IsError(e)) {
     printf("ERROR: thisFunctionFails has failed");
-    Handled(e);
+    Handled();
 }
 ```
 
-Finally, the error is marked handled with `Handled()`. This will erase the
-current stack of errors and indicates that the script has returned to a safe
-state.
+### Nested Errors
+
+If an error has been returned and the call site cannoy handle it, you can simply
+return another `Error()` to the next caller. Errors will stack along with full
+file and line information so when you handle them, you have all the data
+available.
+
+Lets modify the above example to pass an error further up the chain:
+
+```pawn
+Error:doSomething() {
+    new Error:e = thisFunctionFails();
+    if(IsError(e)) {
+        return Error(1, "thisFunctionFails has failed and I don't know what to do, maybe my caller does");
+    }
+}
+
+public OnSomething() {
+    new Error:e = doSomething();
+    if(IsError(e)) {
+        print("something went wrong");
+        Handled();
+    }
+}
+```
+
+### Marking Errors as Handled
+
+At the end of these examples, the error is marked handled with `Handled()`. This
+will erase the current stack of errors and indicates that the script has
+returned to a safe state.
 
 If a single error or a stack of errors is unhandled, the error information will
 be printed once the current stack has returned (in other words, once the current
 callback has finished).
+
+### GetErrors
+
+So far you've seen a lot of creating errors with text content but not a lot of
+getting that text content back for worthwhile descriptions of errors.
+
+Well `GetErrors` does exactly that. We can modify the above example to include a
+`GetErrors` call and then the usage of a custom logger which may store the
+information in a database for later analysis or send it to a developer's channel
+on IRC, Slack or Discord:
+
+```pawn
+public OnSomething() {
+    new Error:e = doSomething();
+    if(IsError(e)) {
+        new errorInfo[1024];
+        GetErrors(errorInfo);
+        customLogger(errorInfo); // send it to a logging database or something
+        Handled();
+    }
+}
+```
+
+`GetErrors` returns a string that looks like this:
+
+```text
+F:\Projects\pawn-errors\test.pwn:11 (warning) #1: i failed :(
+F:\Projects\pawn-errors\test.pwn:25 (warning) #2: value was not equal to 5
+F:\Projects\pawn-errors\test.pwn:39 (warning) #3: value was not odd
+```
+
+This format uses the same standard pattern that the vscode-pawn problem matcher
+expects, that means your errors will show up in the editor if you use the
+`Run Package` task:
+
+![https://i.imgur.com/EP7uqs1.png](https://i.imgur.com/EP7uqs1.png)
+
+### NoError and Semantics of Return Values
+
+You can also return `NoError()` to indicate that the function did not fail,
+however this function does take an argument:
+
+```pawn
+Error:temperature(input) {
+    if(input > 100) {
+        return Error(1, "Too hot to survive!");
+    }
+    if(input > 50) {
+        return NoError(2); // can survive, but too hot to go outside
+    }
+    return NoError(); // it's cool
+}
+```
+
+Here, the semantics are important. The first branch returns a full on error,
+something has gone wrong that the function can not deal with internally and must
+raise an error.
+
+The second branch declares that there's no error, but it still returns a
+non-zero exit code which indicates to the call site that the function did not
+complete but it wasn't because of instability, it was merely something else less
+important.
+
+Take for example an account load function, it has three exit states:
+
+- 1: Account was corrupt in some way
+- 2: Account is banned
+- 0: Account is fine
+
+The first state is an error, something has gone wrong with the system that has
+resulted in a corrupt file. The second state is more mild, the account wasn't
+loaded because the user is banned, that's not an error that's just a situation
+where the function did not complete but it was an expected outcome. And finally
+the zero return code is the success state. Functions only ever need a single
+success state, otherwise they are too complex.
+
+Here's the code version of that example:
+
+```pawn
+stock Error:LoadPlayerAccount(playerid, file[], fileData[]) {
+    new Error:error;
+
+    error = ReadFile(file, fileData);
+    if(IsError(error)) {
+        return Error(1, "failed to read player account file");
+    }
+
+    if(fileData[E_PLAYER_BANNED]) {
+        return NoError(2); // player is banned, no point doing more work
+    }
+
+    // do some processing on the player's account now that we know that
+    // 1. it's not corrupt
+    // 2. they are not banned
+
+    return NoError(); // default value is 0
+}
+```
+
+This pattern makes use of guard clauses as points in code to catch errors early
+and return them up the stack to be handled.
 
 ## Testing
 

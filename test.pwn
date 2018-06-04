@@ -5,12 +5,13 @@
 #define RUN_TESTS
 #include <YSI\y_testing>
 
+
 Error:failsOnTrue(bool:fails) {
 	if(fails) {
-		return Error("i failed :(");
+		return Error(1, "i failed :(");
 	}
 
-	return NoError;
+	return NoError();
 }
 
 Error:failsOn5(input) {
@@ -20,11 +21,11 @@ Error:failsOn5(input) {
 	}
 
 	new Error:e = failsOnTrue(fails);
-	if(e) {
-		return Error("value was not equal to 5");
+	if(IsError(e)) {
+		return Error(1, "value was not equal to 5");
 	}
 
-	return NoError;
+	return NoError();
 }
 
 Error:failsOnOdd(input) {
@@ -34,11 +35,22 @@ Error:failsOnOdd(input) {
 	}
 
 	new Error:e = failsOn5(fails);
-	if(e) {
-		return Error("value was not odd");
+	if(IsError(e)) {
+		return Error(1, "value was not odd");
 	}
 
-	return NoError;
+	return NoError();
+}
+
+Error:failsOn5WarnsOn6(input) {
+	if(input == 6) {
+		return NoError(2);
+	}
+	if(input == 5) {
+		return Error(1, "function incomplete, can not continue");
+	}
+
+	return NoError();
 }
 
 Test:ErrorDepth1() {
@@ -58,12 +70,12 @@ Test:ErrorDepth1() {
 		printf("'%s'", gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
 
-		ASSERT(Handled(e) == 0);
+		ASSERT(Handled() == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
 
 	ASSERT(GetErrorCount() == 0);
-	ASSERT(Handled(Error:0) == 1);
+	ASSERT(Handled() == 1);
 }
 
 Test:ErrorDepth2() {
@@ -71,7 +83,7 @@ Test:ErrorDepth2() {
 		new Error:e;
 
 		e = failsOn5(5);
-		ASSERT(e == Error:2);
+		ASSERT(e == Error:1);
 
 		new count = GetErrorCount();
 		ASSERT(count == 2);
@@ -83,12 +95,12 @@ Test:ErrorDepth2() {
 		print(gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
 
-		ASSERT(Handled(e) == 0);
+		ASSERT(Handled() == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
 
 	ASSERT(GetErrorCount() == 0);
-	ASSERT(Handled(Error:0) == 1);
+	ASSERT(Handled() == 1);
 }
 
 Test:ErrorDepth3() {
@@ -96,7 +108,7 @@ Test:ErrorDepth3() {
 		new Error:e;
 
 		e = failsOnOdd(5);
-		ASSERT(e == Error:3);
+		ASSERT(e == Error:1);
 
 		new count = GetErrorCount();
 		ASSERT(count == 3);
@@ -108,12 +120,39 @@ Test:ErrorDepth3() {
 		print(gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
 
-		ASSERT(Handled(e) == 0);
+		ASSERT(Handled() == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
 
 	ASSERT(GetErrorCount() == 0);
-	ASSERT(Handled(Error:0) == 1);
+	ASSERT(Handled() == 1);
+}
+
+Test:ErrorNoneWithCode() {
+	{
+		new Error:e;
+
+		e = failsOn5WarnsOn6(5);
+		ASSERT(e == Error:1);
+
+		new count = GetErrorCount();
+		printf("%d", count);
+		ASSERT(count == 1);
+
+		new
+			gotError[512];
+		GetErrors(gotError);
+		print(gotError);
+
+		Handled();
+
+		e = failsOn5WarnsOn6(6);
+		ASSERT(e == Error:2);
+
+		ASSERT(GetErrorCount() == 0);
+	}
+
+	ASSERT(GetErrorCount() == 0);
 }
 
 Test:ErrorUnhandled() {

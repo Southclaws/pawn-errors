@@ -41,11 +41,19 @@
 
 // Error should be called and the return value returned from any function that
 // fails to do what it should.
-forward Error:Error(what[], ...);
+forward Error:Error(code, what[], ...);
+
+// NoError should be called and the return value returned from any function that
+// did not fail but exited with some semantic error code.
+forward Error:NoError(code = 0);
+
+// IsError is used for checking both if an `Error:` value contains an error code
+// and that there are one or more errors on the error buffer.
+bool:IsError(Error:e);
 
 // Handled should be called on an error when it has been resolved and no longer
 // needs to be stored. This erases all current errors and resets error state.
-forward Handled(Error:e);
+forward Handled();
 
 // GetErrorCount returns the amount of errors that are currently stacked up and
 // awaiting being `Handled()`.
@@ -57,11 +65,7 @@ forward GetErrors(output[], len = sizeof output);
 // PrintError simply prints the current error state.
 forward PrintError();
 
-// When an Error: leaves scope without being handled, a nasty error is printed!
-// forward operator~(Error:e[], i);
 
-// NoError is to be returned by an Error: tagged function if it was successful.
-const Error:NoError = Error:0;
 const ErrorTag = tagof(Error:);
 
 
@@ -85,7 +89,7 @@ static
     ErrorSourceTimer;
 
 
-stock Error:Error(what[]) {
+stock Error:Error(code, what[]) {
     if(Count == MAX_STACKED_ERRORS - 1) {
         printf("[error] %d too many unhandled errors:\n%s", Count, ErrorBuffer);
 
@@ -139,10 +143,21 @@ stock Error:Error(what[]) {
         ErrorBuffer[bufferIndex][E_ERROR_MESSAGE]);
     #endif
 
-    return Error:Count;
+    return Error:code;
 }
 
-stock Handled(Error:e) {
+stock Error:NoError(code = 0) {
+    return Error:code;
+}
+
+stock bool:IsError(Error:e) {
+    if(_:e > 0 && Count > 0) {
+        return true;
+    }
+    return false;
+}
+
+stock Handled() {
     if(Count == 0) {
         print("attempt to handle non-present error");
 
@@ -151,14 +166,6 @@ stock Handled(Error:e) {
         #endif
 
         return 1;
-    }
-
-    if(e != Error:Count) {
-        print("e != count in error handler");
-
-        #if defined _PRINT_BACKTRACES
-        PrintAmxBacktrace();
-        #endif
     }
 
     #if defined _DEBUG_PRINTS
