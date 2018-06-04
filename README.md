@@ -62,7 +62,7 @@ if(IsError(e)) {
 
 ### Nested Errors
 
-If an error has been returned and the call site cannoy handle it, you can simply
+If an error has been returned and the call site cannot handle it, you can simply
 return another `Error()` to the next caller. Errors will stack along with full
 file and line information so when you handle them, you have all the data
 available.
