@@ -41,7 +41,7 @@
 
 // Error should be called and the return value returned from any function that
 // fails to do what it should.
-forward Error:Error(code, what[], ...);
+forward Error:Error(code, what[] = "");
 
 // NoError should be called and the return value returned from any function that
 // did not fail but exited with some semantic error code.
@@ -89,7 +89,7 @@ static
     ErrorSourceTimer;
 
 
-stock Error:Error(code, what[]) {
+stock Error:Error(code, what[] = "") {
     if(Count == MAX_STACKED_ERRORS - 1) {
         printf("[error] %d too many unhandled errors:\n%s", Count, ErrorBuffer);
 
@@ -104,8 +104,11 @@ stock Error:Error(code, what[]) {
     ErrorBuffer[bufferIndex][E_ERROR_MESSAGE][0] = EOS;
     ErrorBuffer[bufferIndex][E_ERROR_LOCATION][0] = EOS;
 
-    // And finally, the actual error message itself.
-    strcat(ErrorBuffer[bufferIndex][E_ERROR_MESSAGE], what, MAX_ERROR_MESSAGE);
+    if(what[0] == EOS) {
+        strcat(ErrorBuffer[bufferIndex][E_ERROR_MESSAGE], "(passed)", MAX_ERROR_MESSAGE);
+    } else {
+        strcat(ErrorBuffer[bufferIndex][E_ERROR_MESSAGE], what, MAX_ERROR_MESSAGE);
+    }
 
     // Get a backtrace
     ErrorBacktrace[0] = EOS;

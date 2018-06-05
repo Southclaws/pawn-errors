@@ -22,7 +22,7 @@ Error:failsOn5(input) {
 
 	new Error:e = failsOnTrue(fails);
 	if(IsError(e)) {
-		return Error(1, "value was not equal to 5");
+		return Error(1);
 	}
 
 	return NoError();
@@ -90,7 +90,7 @@ Test:ErrorDepth2() {
 
 		new
 			gotError[512],
-			wantFind[] = "test.pwn:25 (warning) #2: value was not equal to 5";
+			wantFind[] = "test.pwn:25 (warning) #2: (passed)";
 		GetErrors(gotError);
 		print(gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);

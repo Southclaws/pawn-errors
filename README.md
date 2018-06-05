@@ -73,7 +73,7 @@ Lets modify the above example to pass an error further up the chain:
 Error:doSomething() {
     new Error:e = thisFunctionFails();
     if(IsError(e)) {
-        return Error(1, "thisFunctionFails has failed and I don't know what to do, maybe my caller does");
+        return Error(1); // message is optional
     }
 }
 
