@@ -4,6 +4,7 @@
 
 #define RUN_TESTS
 #include <YSI\y_testing>
+#include <logger>
 
 
 Error:failsOnTrue(bool:fails) {
@@ -65,7 +66,7 @@ Test:ErrorDepth1() {
 
 		new
 			gotError[512],
-			wantFind[] = "test.pwn:11 (warning) #1: i failed :(\n";
+			wantFind[] = "(warning) #1: i failed :(\n";
 		GetErrors(gotError);
 		printf("'%s'", gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
@@ -90,7 +91,7 @@ Test:ErrorDepth2() {
 
 		new
 			gotError[512],
-			wantFind[] = "test.pwn:25 (warning) #2: (passed)";
+			wantFind[] = "(warning) #2: (passed)";
 		GetErrors(gotError);
 		print(gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
@@ -115,7 +116,7 @@ Test:ErrorDepth3() {
 
 		new
 			gotError[512],
-			wantFind[] = "test.pwn:39 (warning) #3: value was not odd\n";
+			wantFind[] = "(warning) #3: value was not odd\n";
 		GetErrors(gotError);
 		print(gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
@@ -172,4 +173,16 @@ Test:ErrorUnhandled() {
 	}
 
 	ASSERT(GetErrorCount() != 0);
+}
+
+Test:LoggerError() {
+	new Error:e;
+
+	e = failsOnOdd(5);
+	ASSERT(e == Error:1);
+
+	log("test",
+		_E(e));
+
+	Handled();
 }

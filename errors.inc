@@ -62,8 +62,11 @@ forward GetErrorCount();
 // GetErrors returns the current error state.
 forward GetErrors(output[], len = sizeof output);
 
-// PrintError simply prints the current error state.
-forward PrintError();
+// PrintErrors simply prints the current error state.
+forward PrintErrors();
+
+// _E is a samp-logger field for adding error information to an err() call
+forward LOGGER_FIELD:_E(Error:e);
 
 
 const ErrorTag = tagof(Error:);
@@ -204,55 +207,31 @@ stock GetErrors(output[], len = sizeof output) {
     return 0;
 }
 
-stock PrintError() {
-    printf("[error] %d errors:\n%s", ErrorBuffer);
+stock PrintErrors() {
+    printf("[error] %d errors:", Count);
+    new line[MAX_ERROR_MESSAGE + MAX_ERROR_LOCATION];
+    for(new i; i < Count; ++i) {
+        printf(
+            line,
+            sizeof line,
+            "%s (warning) #%d: %s",
+            ErrorBuffer[i][E_ERROR_LOCATION],
+            i + 1,
+            ErrorBuffer[i][E_ERROR_MESSAGE]
+        );
+    }
 }
 
-// stock Error:operator=(Error:e) {
-//     new bufferIndex = _:e - 1;
-//     printf("[assign] index %d", bufferIndex);
-//     if(0 <= bufferIndex < Count) {
-//         ErrorBuffer[bufferIndex][E_ERROR_STATE] = 1;
-//     }
-//     return e;
-// }
+stock LOGGER_FIELD:_E(Error:e) {
+    new result[256];
+    format(
+        result,
+        sizeof result,
+        "errorCode=%d errorLoc=%s error=\"%s\"",
+        _:e,
+        ErrorBuffer[0][E_ERROR_LOCATION],
+        ErrorBuffer[0][E_ERROR_MESSAGE]
+    );
 
-// stock operator~(Error:e[], c) {
-//     #pragma unused c
-
-//     if(c == 0) {
-//         print("[destruct] empty");
-//         return;
-//     }
-
-//     if(e[0] == NoError) {
-//         print("[destruct] NoError");
-//         return;
-//     }
-
-//     new bufferIndex = _:e[0] - 1;
-
-//     if(ErrorBuffer[bufferIndex][E_ERROR_STATE] == 0) {
-//         print("[destruct] state 0");
-//         return;
-//     }
-
-//     printf("\n[destruct] bufferIndex %d count %d", bufferIndex, Count);
-
-//     printf("[error] Unhandled error #%d left scope:", bufferIndex + 1);
-//     for(new j; j < Count; ++j) {
-//         printf("%s (error) #%d: %s",
-//             ErrorBuffer[j][E_ERROR_LOCATION],
-//             j + 1,
-//             ErrorBuffer[j][E_ERROR_MESSAGE]
-//         );
-//     }
-
-//     Count = 0;
-
-//     #if defined _PRINT_BACKTRACES
-//     PrintAmxBacktrace();
-//     #endif
-
-//     return;
-// }
+    return LOGGER_FIELD:result;
+}
