@@ -9,7 +9,7 @@
 		"Zeex/samp-plugin-crashdetect:v4.19"
 	],
 	"dev_dependencies": [
-		"pawn-lang/YSI-Includes".
+		"pawn-lang/YSI-Includes",
 		"Southclaws/samp-logger"
 	],
 	"runtime": {
