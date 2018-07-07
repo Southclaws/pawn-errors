@@ -127,6 +127,11 @@ stock Error:Error(code, what[] = "") {
     // the end of the line is simply the location of the first \n starting from
     // the `begin` position.
     new end = strfind(ErrorBacktrace, "\n", false, begin);
+    if(end == -1) {
+        end = strlen(ErrorBacktrace);
+    } else if(end > strlen(ErrorBacktrace)) {
+        end = strlen(ErrorBacktrace);
+    }
     // zero out the end of the line
     ErrorBacktrace[end] = 0;
 
