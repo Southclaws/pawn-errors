@@ -232,7 +232,7 @@ stock LOGGER_FIELD:_E(Error:e) {
     format(
         result,
         sizeof result,
-        "errorCode=%d errorLoc=%s error=\"%s\"",
+        "errorCode=%d errorLoc=\"%s\" error=\"%s\"",
         _:e,
         ErrorBuffer[0][E_ERROR_LOCATION],
         ErrorBuffer[0][E_ERROR_MESSAGE]
