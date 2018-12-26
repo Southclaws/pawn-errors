@@ -72,6 +72,8 @@ forward LOGGER_FIELD:_E(Error:e);
 const ErrorTag = tagof(Error:);
 
 
+forward _errors_resolveUnhandled();
+
 enum E_ERROR_INFO {
     // Each error is marked as unhandled (1) until Error or Handled is called.
     E_ERROR_STATE,
@@ -108,9 +110,15 @@ stock Error:Error(code, what[] = "") {
     ErrorBuffer[bufferIndex][E_ERROR_LOCATION][0] = EOS;
 
     if(what[0] == EOS) {
-        strcat(ErrorBuffer[bufferIndex][E_ERROR_MESSAGE], "(passed)", MAX_ERROR_MESSAGE);
+        strcat(
+            ErrorBuffer[bufferIndex][E_ERROR_MESSAGE],
+            "(passed)",
+            MAX_ERROR_MESSAGE);
     } else {
-        strcat(ErrorBuffer[bufferIndex][E_ERROR_MESSAGE], what, MAX_ERROR_MESSAGE);
+        strcat(
+            ErrorBuffer[bufferIndex][E_ERROR_MESSAGE],
+            what,
+            MAX_ERROR_MESSAGE);
     }
 
     // Get a backtrace
@@ -155,6 +163,14 @@ stock Error:Error(code, what[] = "") {
     #endif
 
     return Error:code;
+}
+
+public _errors_resolveUnhandled() {
+    if(Count == 0) {
+        return;
+    }
+    print("[error] UNHANDLED ERRORS:");
+    PrintErrors();
 }
 
 stock Error:NoError(code = 0) {
