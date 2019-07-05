@@ -41,7 +41,7 @@
 
 // Error should be called and the return value returned from any function that
 // fails to do what it should.
-forward Error:Error(code, what[] = "");
+forward Error:Error(code, const what[] = "");
 
 // NoError should be called and the return value returned from any function that
 // did not fail but exited with some semantic error code.
