@@ -94,7 +94,7 @@ static
     ErrorSourceTimer;
 
 
-stock Error:Error(code, what[] = "") {
+stock Error:Error(code, const what[] = "") {
     if(Count == MAX_STACKED_ERRORS - 1) {
         printf("[error] %d too many unhandled errors:\n%s", Count, ErrorBuffer);
 
