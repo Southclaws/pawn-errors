@@ -41,7 +41,7 @@
 
 // Error should be called and the return value returned from any function that
 // fails to do what it should.
-forward Error:Error(code, what[] = "");
+forward Error:Error(code, const what[] = "");
 
 // NoError should be called and the return value returned from any function that
 // did not fail but exited with some semantic error code.
@@ -94,7 +94,7 @@ static
     ErrorSourceTimer;
 
 
-stock Error:Error(code, what[] = "") {
+stock Error:Error(code, const what[] = "") {
     if(Count == MAX_STACKED_ERRORS - 1) {
         printf("[error] %d too many unhandled errors:\n%s", Count, ErrorBuffer);
 
