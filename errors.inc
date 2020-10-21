@@ -96,12 +96,13 @@ static
 
 stock Error:Error(code, const what[] = "") {
     if(Count == MAX_STACKED_ERRORS - 1) {
-        printf("[error] %d too many unhandled errors:\n%s", Count, ErrorBuffer);
-
-        #if defined _PRINT_BACKTRACES
-        PrintAmxBacktrace();
-        #endif
+        printf("[error] %d too many unhandled errors:", Count);
+        _errors_resolveUnhandled();
     }
+
+    #if defined _PRINT_BACKTRACES
+    PrintAmxBacktrace();
+    #endif
 
     new bufferIndex = Count;
     Count++;
@@ -231,11 +232,8 @@ stock GetErrors(output[], len = sizeof output) {
 
 stock PrintErrors() {
     printf("[error] %d errors:", Count);
-    new line[MAX_ERROR_MESSAGE + MAX_ERROR_LOCATION];
     for(new i; i < Count; ++i) {
         printf(
-            line,
-            sizeof line,
             "%s (warning) #%d: %s",
             ErrorBuffer[i][E_ERROR_LOCATION],
             i + 1,
