@@ -171,6 +171,7 @@ public _errors_resolveUnhandled() {
     }
     print("[error] UNHANDLED ERRORS:");
     PrintErrors();
+    Count = 0;
 }
 
 stock Error:NoError(code = 0) {
