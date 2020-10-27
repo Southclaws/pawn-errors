@@ -242,7 +242,7 @@ stock PrintErrors() {
     }
 }
 
-stock LOGGER_FIELD:_E(Error:e) {
+stock LOGGER_FIELD:Logger_E(Error:e) {
     new result[256];
     format(
         result,
