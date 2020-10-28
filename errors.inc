@@ -10,6 +10,7 @@
 #define _errors_included
 
 
+#include <a_samp>
 #include <crashdetect>
 
 

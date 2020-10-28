@@ -3,7 +3,7 @@
 #include "errors.inc"
 
 #define RUN_TESTS
-#include <YSI\y_testing>
+#include <YSI_Core\y_testing>
 #include <logger>
 
 
@@ -181,8 +181,8 @@ Test:LoggerError() {
 	e = failsOnOdd(5);
 	ASSERT(e == Error:1);
 
-	log("test",
-		_E(e));
+	Logger_Log("test",
+		Logger_E(e));
 
 	Handled();
 }
