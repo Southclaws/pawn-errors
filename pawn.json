@@ -1,7 +1,6 @@
 {
 	"user": "Southclaws",
 	"repo": "pawn-errors",
-	"tag": "1.1.0",
 	"entry": "test.pwn",
 	"output": "test.amx",
 	"dependencies": [
@@ -9,13 +8,15 @@
 		"Zeex/samp-plugin-crashdetect:v4.19"
 	],
 	"dev_dependencies": [
-		"pawn-lang/YSI-Includes",
-		"Southclaws/samp-logger"
+		"pawn-lang/YSI-Includes"
 	],
 	"runtime": {
 		"version": "0.3.7",
 		"mode": "y_testing",
 		"rcon_password": "password",
-		"port": 7777
+		"port": 7777,
+		"hostname": "SA-MP Server",
+		"maxplayers": 50,
+		"language": ""
 	}
 }

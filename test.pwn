@@ -4,7 +4,6 @@
 
 #define RUN_TESTS
 #include <YSI_Core\y_testing>
-#include <logger>
 
 
 Error:failsOnTrue(bool:fails) {
@@ -55,6 +54,7 @@ Error:failsOn5WarnsOn6(input) {
 }
 
 Test:ErrorDepth1() {
+	print("\n\n\n--- ErrorDepth1 ---\n\n\n");
 	{
 		new Error:e;
 
@@ -66,11 +66,12 @@ Test:ErrorDepth1() {
 
 		new
 			gotError[512],
-			wantFind[] = "(warning) #1: i failed :(\n";
+			wantFind[] = "(error) #1: i failed :(\n";
 		GetErrors(gotError);
 		printf("'%s'", gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
 
+		PrintErrors();
 		ASSERT(Handled() == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
@@ -80,6 +81,7 @@ Test:ErrorDepth1() {
 }
 
 Test:ErrorDepth2() {
+	print("\n\n\n--- ErrorDepth2 ---\n\n\n");
 	{
 		new Error:e;
 
@@ -91,11 +93,12 @@ Test:ErrorDepth2() {
 
 		new
 			gotError[512],
-			wantFind[] = "(warning) #2: (passed)";
+			wantFind[] = "(error) #2: (none)";
 		GetErrors(gotError);
 		print(gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
 
+		PrintErrors();
 		ASSERT(Handled() == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
@@ -105,6 +108,7 @@ Test:ErrorDepth2() {
 }
 
 Test:ErrorDepth3() {
+	print("\n\n\n--- ErrorDepth3 ---\n\n\n");
 	{
 		new Error:e;
 
@@ -116,11 +120,12 @@ Test:ErrorDepth3() {
 
 		new
 			gotError[512],
-			wantFind[] = "(warning) #3: value was not odd\n";
+			wantFind[] = "(error) #3: value was not odd\n";
 		GetErrors(gotError);
 		print(gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
 
+		PrintErrors();
 		ASSERT(Handled() == 0);
 		ASSERT(GetErrorCount() == 0);
 	}
@@ -130,6 +135,7 @@ Test:ErrorDepth3() {
 }
 
 Test:ErrorNoneWithCode() {
+	print("\n\n\n--- ErrorNoneWithCode ---\n\n\n");
 	{
 		new Error:e;
 
@@ -157,6 +163,7 @@ Test:ErrorNoneWithCode() {
 }
 
 Test:ErrorUnhandled() {
+	print("\n\n\n--- ErrorUnhandled ---\n\n\n");
 	{
 		new Error:e;
 
@@ -173,16 +180,4 @@ Test:ErrorUnhandled() {
 	}
 
 	ASSERT(GetErrorCount() != 0);
-}
-
-Test:LoggerError() {
-	new Error:e;
-
-	e = failsOnOdd(5);
-	ASSERT(e == Error:1);
-
-	Logger_Log("test",
-		Logger_E(e));
-
-	Handled();
 }

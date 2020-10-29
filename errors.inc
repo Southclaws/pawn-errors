@@ -24,6 +24,11 @@
     #define _PRINT_BACKTRACES
 #endif
 
+// MAX_BACKTRACE_SIZE is the size of the buffer to store backtrace in
+#if !defined MAX_BACKTRACE_SIZE
+    #define MAX_BACKTRACE_SIZE (2048)
+#endif
+
 // MAX_STACKED_ERRORS sets the maximum error depth
 #if !defined MAX_STACKED_ERRORS
     #define MAX_STACKED_ERRORS (16)
@@ -32,11 +37,6 @@
 // MAX_ERROR_MESSAGE controls the maximum size of an error message
 #if !defined MAX_ERROR_MESSAGE
     #define MAX_ERROR_MESSAGE (256)
-#endif
-
-// MAX_ERROR_LOCATION controls the maximum size of an error location string
-#if !defined MAX_ERROR_LOCATION
-    #define MAX_ERROR_LOCATION (128)
 #endif
 
 
@@ -66,29 +66,17 @@ forward GetErrors(output[], len = sizeof output);
 // PrintErrors simply prints the current error state.
 forward PrintErrors();
 
-// _E is a samp-logger field for adding error information to an err() call
-forward LOGGER_FIELD:_E(Error:e);
-
 
 const ErrorTag = tagof(Error:);
 
 
 forward _errors_resolveUnhandled();
 
-enum E_ERROR_INFO {
-    // Each error is marked as unhandled (1) until Error or Handled is called.
-    E_ERROR_STATE,
-    // Each error has a short, concise message associated with it
-    E_ERROR_MESSAGE[MAX_ERROR_MESSAGE],
-    // A location is a file name and a line number
-    E_ERROR_LOCATION[MAX_ERROR_LOCATION],
-}
-
 static
-    // ErrorBuffer simply contains all error messages separated by newlines.
-    ErrorBuffer[MAX_STACKED_ERRORS][E_ERROR_INFO],
-    // A heap space to store large backtraces to avoid stack overflows.
-    ErrorBacktrace[1024],
+    // CauseBuffer contains all stacked error messages.
+    CauseBuffer[MAX_BACKTRACE_SIZE][MAX_ERROR_MESSAGE],
+    // TraceBuffer contains all stacked error backtraces.
+    TraceBuffer[MAX_STACKED_ERRORS][MAX_BACKTRACE_SIZE],
     // Since Pawn is procedural, Error IDs are simply an incrementing value.
     Count,
     // Error starts this timer and Handled kills it.
@@ -98,7 +86,12 @@ static
 stock Error:Error(code, const what[] = "") {
     if(Count == MAX_STACKED_ERRORS - 1) {
         printf("[error] %d too many unhandled errors:", Count);
+        // If we've hit the error limit, don't squash this error, instead handle
+        // it and reset the index counter so this error can be buffered.
         _errors_resolveUnhandled();
+        // Kill the existing deferred handler timer so a new one can be started.
+        // This will happen because the resolveUnhandled function resets Count.
+        KillTimer(ErrorSourceTimer);
     }
 
     #if defined _PRINT_BACKTRACES
@@ -108,60 +101,25 @@ stock Error:Error(code, const what[] = "") {
     new bufferIndex = Count;
     Count++;
 
-    ErrorBuffer[bufferIndex][E_ERROR_MESSAGE][0] = EOS;
-    ErrorBuffer[bufferIndex][E_ERROR_LOCATION][0] = EOS;
-
+    // store the error cause and backtrace into the buffer.
     if(what[0] == EOS) {
-        strcat(
-            ErrorBuffer[bufferIndex][E_ERROR_MESSAGE],
-            "(passed)",
-            MAX_ERROR_MESSAGE);
+        format(CauseBuffer[bufferIndex], MAX_ERROR_MESSAGE, "(none)");
     } else {
-        strcat(
-            ErrorBuffer[bufferIndex][E_ERROR_MESSAGE],
-            what,
-            MAX_ERROR_MESSAGE);
+        format(CauseBuffer[bufferIndex], MAX_ERROR_MESSAGE, what);
     }
+    GetBacktrace(TraceBuffer[bufferIndex]);
 
-    // Get a backtrace
-    ErrorBacktrace[0] = EOS;
-    GetBacktrace(ErrorBacktrace);
-    // Trim off the beginning by scanning for the end of the first line
-    // lines look like:
-    // - # addr in function (args) at file:line
-    // first, find the location of the last element of the first trace line
-    // then from that position, find the first ` at ` then add 4 to skip over.
-    new begin = strfind(ErrorBacktrace, " at ", false,
-        strfind(ErrorBacktrace, "errors.inc")
-    ) + 4;
-    // the end of the line is simply the location of the first \n starting from
-    // the `begin` position.
-    new end = strfind(ErrorBacktrace, "\n", false, begin);
-    if(end == -1) {
-        end = strlen(ErrorBacktrace);
-    } else if(end > strlen(ErrorBacktrace)) {
-        end = strlen(ErrorBacktrace);
-    }
-    // zero out the end of the line
-    ErrorBacktrace[end] = 0;
-
-    // ErrorBacktrace[begin] points to the beginning of the line number
-    strcat(
-        ErrorBuffer[bufferIndex][E_ERROR_LOCATION],
-        ErrorBacktrace[begin], MAX_ERROR_LOCATION);
-
-    ErrorBuffer[bufferIndex][E_ERROR_STATE] = 1;
+    // if this is the first error being generated within this call stack, defer
+    // a function call to handle unresolved errors in the future.
     if(bufferIndex == 0) {
         ErrorSourceTimer = SetTimer("_errors_resolveUnhandled", 0, 0);
-    } else {
-        ErrorBuffer[bufferIndex - 1][E_ERROR_STATE] = 0;
     }
 
     #if defined _DEBUG_PRINTS
     printf("[error] %d %s: %s",
         Count,
-        ErrorBuffer[bufferIndex][E_ERROR_LOCATION],
-        ErrorBuffer[bufferIndex][E_ERROR_MESSAGE]);
+        what,
+        TraceBuffer[bufferIndex]);
     #endif
 
     return Error:code;
@@ -189,12 +147,8 @@ stock bool:IsError(Error:e) {
 
 stock Handled() {
     if(Count == 0) {
-        print("attempt to handle non-present error");
-
-        #if defined _PRINT_BACKTRACES
-        PrintAmxBacktrace();
-        #endif
-
+        print("[debug] attempt to handle non-present error");
+        // PrintAmxBacktrace();
         return 1;
     }
 
@@ -202,9 +156,6 @@ stock Handled() {
     printf("[handled] resolved error stack of %d errors", Count);
     #endif
 
-    for(new i; i < Count; ++i) {
-        ErrorBuffer[i][E_ERROR_STATE] = 0;
-    }
     Count = 0;
     KillTimer(ErrorSourceTimer);
 
@@ -216,15 +167,37 @@ stock GetErrorCount() {
 }
 
 stock GetErrors(output[], len = sizeof output) {
-    new line[MAX_ERROR_MESSAGE + MAX_ERROR_LOCATION];
+    new
+        line[MAX_ERROR_MESSAGE + 128],
+        start, end, eol, trace_line = 1,
+        in[128], at[128];
+
     for(new i; i < Count; ++i) {
+        // skip the first line, it's useless.
+        end = strfind(TraceBuffer[i], "\n", false, end);
+        while(start != -1 && end != -1) {
+            start = strfind(TraceBuffer[i], " in ", false, end);
+            end = strfind(TraceBuffer[i], " at ", false, start);
+            eol = strfind(TraceBuffer[i], "\n", false, end);
+            if(start == -1 || end == -1 || eol == -1) {
+                break;
+            }
+
+            strmid(in, TraceBuffer[i], start + 4, end);
+            strmid(at, TraceBuffer[i], end + 4, eol);
+            if(trace_line == 2) {
+                break;
+            }
+            trace_line++;
+        }
+
         format(
             line,
             sizeof line,
-            "%s (warning) #%d: %s\n",
-            ErrorBuffer[i][E_ERROR_LOCATION],
+            "%s (error) #%d: %s\n",
+            at,
             i + 1,
-            ErrorBuffer[i][E_ERROR_MESSAGE]
+            CauseBuffer[i]
         );
         strcat(output, line, len);
     }
@@ -232,27 +205,28 @@ stock GetErrors(output[], len = sizeof output) {
 }
 
 stock PrintErrors() {
-    printf("[error] %d errors:", Count);
+    new
+        start, end, eol,
+        in[128], at[128];
+
+    printf("[error] Error stack with %d errors:", Count);
     for(new i; i < Count; ++i) {
-        printf(
-            "%s (warning) #%d: %s",
-            ErrorBuffer[i][E_ERROR_LOCATION],
-            i + 1,
-            ErrorBuffer[i][E_ERROR_MESSAGE]
-        );
+        printf("[error] Error #%d: '%s' trace:", i, CauseBuffer[i]);
+
+        // skip the first line, it's useless.
+        end = strfind(TraceBuffer[i], "\n", false, end);
+        while(start != -1 && end != -1) {
+            start = strfind(TraceBuffer[i], " in ", false, end);
+            end = strfind(TraceBuffer[i], " at ", false, start);
+            eol = strfind(TraceBuffer[i], "\n", false, end);
+            if(start == -1 || end == -1 || eol == -1) {
+                break;
+            }
+
+            strmid(in, TraceBuffer[i], start + 4, end);
+            strmid(at, TraceBuffer[i], end + 4, eol);
+            
+            printf("[error] %s (error) #%d: %s", at, i + 1, in);
+        }
     }
-}
-
-stock LOGGER_FIELD:Logger_E(Error:e) {
-    new result[256];
-    format(
-        result,
-        sizeof result,
-        "errorCode=%d errorLoc=\"%s\" error=\"%s\"",
-        _:e,
-        ErrorBuffer[0][E_ERROR_LOCATION],
-        ErrorBuffer[0][E_ERROR_MESSAGE]
-    );
-
-    return LOGGER_FIELD:result;
 }
