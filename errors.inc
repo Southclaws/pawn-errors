@@ -60,6 +60,18 @@ forward Handled();
 // awaiting being `Handled()`.
 forward GetErrorCount();
 
+// GetLastErrorCause writes the most recent error cause text into `out`.
+forward GetLastErrorCause(out[], len = sizeof out);
+
+// GetErrorCause writes the specified error cause into `out`.
+forward GetErrorCause(index, out[], len = sizeof out);
+
+// GetLastErrorTrace writes the most recent error trace text into `out`.
+forward GetLastErrorTrace(out[], len = sizeof out);
+
+// GetErrorTrace writes the specified error trace into `out`.
+forward GetErrorTrace(index, out[], len = sizeof out);
+
 // GetErrors returns the current error state.
 forward GetErrors(output[], len = sizeof output);
 
@@ -164,6 +176,32 @@ stock Handled() {
 
 stock GetErrorCount() {
     return Count;
+}
+
+stock GetLastErrorCause(out[], len = sizeof out) {
+    format(out, len, CauseBuffer[Count - 1]);
+    return 0;
+}
+
+stock GetErrorCause(index, out[], len = sizeof out) {
+    if(index >= Count) {
+        return 1;
+    }
+    format(out, len, CauseBuffer[index]);
+    return 0;
+}
+
+stock GetLastErrorTrace(out[], len = sizeof out) {
+    format(out, len, TraceBuffer[Count - 1]);
+    return 0;
+}
+
+stock GetErrorTrace(index, out[], len = sizeof out) {
+    if(index >= Count) {
+        return 1;
+    }
+    format(out, len, TraceBuffer[index]);
+    return 0;
 }
 
 stock GetErrors(output[], len = sizeof output) {

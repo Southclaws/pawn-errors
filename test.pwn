@@ -1,5 +1,5 @@
 #define NO_BACKTRACES
-#define DEBUG_PRINTS
+// #define DEBUG_PRINTS
 #include "errors.inc"
 
 #define RUN_TESTS
@@ -180,4 +180,57 @@ Test:ErrorUnhandled() {
 	}
 
 	ASSERT(GetErrorCount() != 0);
+}
+
+Test:GetLastErrorCause() {
+	print("\n\n\n--- GetLastErrorCause ---\n\n\n");
+	{
+		new Error:e;
+
+		e = failsOnTrue(true);
+		ASSERT(e == Error:1);
+
+		new cause[128];
+		new ret = GetLastErrorCause(cause);
+		ASSERT(ret == 0);
+
+		new
+			wantFind[] = "i failed :(";
+		printf("'%s'", cause);
+		ASSERT(strfind(cause, wantFind) != -1);
+
+		PrintErrors();
+		ASSERT(Handled() == 0);
+		ASSERT(GetErrorCount() == 0);
+	}
+}
+
+Test:GetErrorCause() {
+	print("\n\n\n--- GetErrorCause ---\n\n\n");
+	{
+		new Error:e;
+
+		e = failsOnTrue(true);
+		ASSERT(e == Error:1);
+
+		e = failsOnTrue(true);
+		ASSERT(e == Error:1);
+
+		new cause[128];
+		new ret = GetErrorCause(0, cause);
+		ASSERT(ret == 0);
+
+		new
+			wantFind[] = "i failed :(";
+		printf("'%s'", cause);
+		ASSERT(strfind(cause, wantFind) != -1);
+
+		ret = GetErrorCause(1, cause);
+		printf("'%s'", cause);
+		ASSERT(strfind(cause, wantFind) != -1);
+
+		PrintErrors();
+		ASSERT(Handled() == 0);
+		ASSERT(GetErrorCount() == 0);
+	}
 }
