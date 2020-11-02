@@ -14,16 +14,6 @@
 #include <crashdetect>
 
 
-// DEBUG_PRINTS if set will make each Error() call also print the error
-#if defined DEBUG_PRINTS
-    #define _DEBUG_PRINTS
-#endif
-
-// PRINT_BACKTRACES if set will print backtraces on internal errors
-#if defined PRINT_BACKTRACES
-    #define _PRINT_BACKTRACES
-#endif
-
 // MAX_BACKTRACE_SIZE is the size of the buffer to store backtrace in
 #if !defined MAX_BACKTRACE_SIZE
     #define MAX_BACKTRACE_SIZE (2048)
@@ -105,10 +95,6 @@ stock Error:Error(code, const what[] = "") {
         KillTimer(ErrorSourceTimer);
     }
 
-    #if defined _PRINT_BACKTRACES
-    PrintAmxBacktrace();
-    #endif
-
     new bufferIndex = Count;
     Count++;
 
@@ -125,13 +111,6 @@ stock Error:Error(code, const what[] = "") {
     if(bufferIndex == 0) {
         ErrorSourceTimer = SetTimer("_errors_resolveUnhandled", 0, 0);
     }
-
-    #if defined _DEBUG_PRINTS
-    printf("[error] %d %s: %s",
-        Count,
-        what,
-        TraceBuffer[bufferIndex]);
-    #endif
 
     return Error:code;
 }
@@ -164,10 +143,6 @@ stock Handled(silent = false) {
         }
         return 1;
     }
-
-    #if defined _DEBUG_PRINTS
-    printf("[handled] resolved error stack of %d errors", Count);
-    #endif
 
     Count = 0;
     KillTimer(ErrorSourceTimer);

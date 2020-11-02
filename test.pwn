@@ -1,5 +1,3 @@
-#define NO_BACKTRACES
-// #define DEBUG_PRINTS
 #include "errors.inc"
 
 #define RUN_TESTS
