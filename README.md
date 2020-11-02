@@ -96,42 +96,6 @@ If a single error or a stack of errors is unhandled, the error information will
 be printed once the current stack has returned (in other words, once the current
 callback has finished).
 
-### GetErrors
-
-So far you've seen a lot of creating errors with text content but not a lot of
-getting that text content back for worthwhile descriptions of errors.
-
-Well `GetErrors` does exactly that. We can modify the above example to include a
-`GetErrors` call and then the usage of a custom logger which may store the
-information in a database for later analysis or send it to a developer's channel
-on IRC, Slack or Discord:
-
-```pawn
-public OnSomething() {
-    new Error:e = doSomething();
-    if(IsError(e)) {
-        new errorInfo[1024];
-        GetErrors(errorInfo);
-        customLogger(errorInfo); // send it to a logging database or something
-        Handled();
-    }
-}
-```
-
-`GetErrors` returns a string that looks like this:
-
-```text
-F:\Projects\pawn-errors\test.pwn:11 (warning) #1: i failed :(
-F:\Projects\pawn-errors\test.pwn:25 (warning) #2: value was not equal to 5
-F:\Projects\pawn-errors\test.pwn:39 (warning) #3: value was not odd
-```
-
-This format uses the same standard pattern that the vscode-pawn problem matcher
-expects, that means your errors will show up in the editor if you use the
-`Run Package` task:
-
-![https://i.imgur.com/EP7uqs1.png](https://i.imgur.com/EP7uqs1.png)
-
 ### NoError and Semantics of Return Values
 
 You can also return `NoError()` to indicate that the function did not fail,

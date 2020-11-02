@@ -64,7 +64,7 @@ Test:ErrorDepth1() {
 
 		new
 			gotError[512],
-			wantFind[] = "(error) #1: i failed :(\n";
+			wantFind[] = "Error:failsOnTrue (bool:fails=true)";
 		GetErrors(gotError);
 		printf("'%s'", gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
@@ -90,10 +90,10 @@ Test:ErrorDepth2() {
 		ASSERT(count == 2);
 
 		new
-			gotError[512],
-			wantFind[] = "(error) #2: (none)";
+			gotError[1024],
+			wantFind[] = "(none)";
 		GetErrors(gotError);
-		print(gotError);
+		printf("'%s'", gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);
 
 		PrintErrors();
@@ -117,8 +117,8 @@ Test:ErrorDepth3() {
 		ASSERT(count == 3);
 
 		new
-			gotError[512],
-			wantFind[] = "(error) #3: value was not odd\n";
+			gotError[2048],
+			wantFind[] = "value was not odd";
 		GetErrors(gotError);
 		print(gotError);
 		ASSERT(strfind(gotError, wantFind) != -1);

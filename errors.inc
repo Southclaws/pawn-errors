@@ -83,6 +83,11 @@ static
     // Error starts this timer and Handled kills it.
     ErrorSourceTimer;
 
+// 91 characters long:
+// 15 + 1 = "AMX backtrace:""
+// 44 + 1 = "#0 native GetBacktrace () in crashdetect.DLL"
+const FIRST_LINE_LEN = 91;
+
 
 stock Error:Error(code, const what[] = "") {
     if(Count == MAX_STACKED_ERRORS - 1) {
@@ -182,65 +187,56 @@ stock GetErrorTrace(index, out[], len = sizeof out) {
 
 stock GetErrors(output[], len = sizeof output) {
     new
-        line[MAX_ERROR_MESSAGE + 128],
-        start, end, eol, trace_line = 1,
-        in[128], at[128];
+        start, end,
+        line[256];
 
+    format(output, len, "[error] Error stack with %d errors:\n", Count);
     for(new i; i < Count; ++i) {
-        // skip the first line, it's useless.
-        end = strfind(TraceBuffer[i], "\n", false, end);
-        while(start != -1 && end != -1) {
-            start = strfind(TraceBuffer[i], " in ", false, end);
-            end = strfind(TraceBuffer[i], " at ", false, start);
-            eol = strfind(TraceBuffer[i], "\n", false, end);
-            if(start == -1 || end == -1 || eol == -1) {
-                break;
-            }
+        format(output, len, "%s[error] Error #%d: '%s' trace:\n", output, i, CauseBuffer[i]);
 
-            strmid(in, TraceBuffer[i], start + 4, end);
-            strmid(at, TraceBuffer[i], end + 4, eol);
-            if(trace_line == 2) {
-                break;
-            }
-            trace_line++;
+        // skip the first two lines, they are useless.
+        start = strfind(TraceBuffer[i], "\n", false, end + FIRST_LINE_LEN) + 1;
+        end = strfind(TraceBuffer[i], "\n", false, start);
+        if(end == -1) {
+            end = strlen(TraceBuffer[i]); // when the trace is only 3 lines long
         }
+        do {
+            start = strfind(TraceBuffer[i], " ", false, start) + 1;
+            strmid(line, TraceBuffer[i], start, end);
 
-        format(
-            line,
-            sizeof line,
-            "%s (error) #%d: %s\n",
-            at,
-            i + 1,
-            CauseBuffer[i]
-        );
-        strcat(output, line, len);
+            // this is the only difference between Print and Get
+            format(line, sizeof line, "[error] %s\n", line);
+            strcat(output, line, len);
+
+            start = end + 1;
+            end = strfind(TraceBuffer[i], "\n", false, start);
+        } while(end != -1);
     }
-    return 0;
 }
 
 stock PrintErrors() {
     new
-        start, end, eol,
-        in[128], at[128];
+        start, end,
+        line[256];
 
     printf("[error] Error stack with %d errors:", Count);
     for(new i; i < Count; ++i) {
         printf("[error] Error #%d: '%s' trace:", i, CauseBuffer[i]);
 
-        // skip the first line, it's useless.
-        end = strfind(TraceBuffer[i], "\n", false, end);
-        while(start != -1 && end != -1) {
-            start = strfind(TraceBuffer[i], " in ", false, end);
-            end = strfind(TraceBuffer[i], " at ", false, start);
-            eol = strfind(TraceBuffer[i], "\n", false, end);
-            if(start == -1 || end == -1 || eol == -1) {
-                break;
-            }
-
-            strmid(in, TraceBuffer[i], start + 4, end);
-            strmid(at, TraceBuffer[i], end + 4, eol);
-            
-            printf("[error] %s (error) #%d: %s", at, i + 1, in);
+        // skip the first two lines, they are useless.
+        start = strfind(TraceBuffer[i], "\n", false, end + FIRST_LINE_LEN) + 1;
+        end = strfind(TraceBuffer[i], "\n", false, start);
+        if(end == -1) {
+            end = strlen(TraceBuffer[i]); // when the trace is only 3 lines long
         }
+        do {
+            start = strfind(TraceBuffer[i], " ", false, start) + 1;
+            strmid(line, TraceBuffer[i], start, end);
+
+            printf("[error] %s", line);
+
+            start = end + 1;
+            end = strfind(TraceBuffer[i], "\n", false, start);
+        } while(end != -1);
     }
 }
