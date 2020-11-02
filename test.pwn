@@ -77,7 +77,7 @@ Test:ErrorDepth1() {
 	}
 
 	ASSERT(GetErrorCount() == 0);
-	ASSERT(Handled() == 1);
+	ASSERT(Handled(true) == 1);
 }
 
 Test:ErrorDepth2() {
@@ -104,7 +104,7 @@ Test:ErrorDepth2() {
 	}
 
 	ASSERT(GetErrorCount() == 0);
-	ASSERT(Handled() == 1);
+	ASSERT(Handled(true) == 1);
 }
 
 Test:ErrorDepth3() {
@@ -131,7 +131,7 @@ Test:ErrorDepth3() {
 	}
 
 	ASSERT(GetErrorCount() == 0);
-	ASSERT(Handled() == 1);
+	ASSERT(Handled(true) == 1);
 }
 
 Test:ErrorNoneWithCode() {

@@ -53,8 +53,10 @@ forward Error:NoError(code = 0);
 bool:IsError(Error:e);
 
 // Handled should be called on an error when it has been resolved and no longer
-// needs to be stored. This erases all current errors and resets error state.
-forward Handled();
+// needs to be stored. This erases all current errors and resets error state. If
+// called while there are no errors present, will print an error unless `silent`
+// is set to true.
+forward Handled(silent = false);
 
 // GetErrorCount returns the amount of errors that are currently stacked up and
 // awaiting being `Handled()`.
@@ -154,10 +156,12 @@ stock bool:IsError(Error:e) {
     return false;
 }
 
-stock Handled() {
+stock Handled(silent = false) {
     if(Count == 0) {
-        print("[debug] attempt to handle non-present error");
-        // PrintAmxBacktrace();
+        if(!silent) {
+            print("[debug] attempt to handle non-present error");
+            PrintAmxBacktrace();
+        }
         return 1;
     }
 
