@@ -79,9 +79,6 @@ forward GetErrors(output[], len = sizeof output);
 forward PrintErrors();
 
 
-const ErrorTag = tagof(Error:);
-
-
 forward _errors_resolveUnhandled();
 
 static
