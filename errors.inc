@@ -114,7 +114,7 @@ stock Error:Error(code, const what[] = "") {
     // if this is the first error being generated within this call stack, defer
     // a function call to handle unresolved errors in the future.
     if(bufferIndex == 0) {
-        ErrorSourceTimer = SetTimer("_errors_resolveUnhandled", 0, 0);
+        ErrorSourceTimer = SetTimer("_errors_resolveUnhandled", 0, false);
     }
 
     return Error:code;
