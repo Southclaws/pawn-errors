@@ -36,7 +36,7 @@ Include in your code and begin using the library:
 ### Basic Errors
 
 Functions that could potentially fail should be tagged `Error:` and either
-return `NoError()` or `Error()`. For example, this is a function that always
+return `Ok()` or `Error()`. For example, this is a function that always
 fails:
 
 ```pawn
@@ -96,9 +96,12 @@ If a single error or a stack of errors is unhandled, the error information will
 be printed once the current stack has returned (in other words, once the current
 callback has finished).
 
-### NoError and Semantics of Return Values
+### Ok (NoError) and Semantics of Return Values
+ 
+You might have seen `NoError()` symbol in older versions, this has been deprecated now and usage
+will result in deprecated warning, telling developer to use `Ok()` instead.
 
-You can also return `NoError()` to indicate that the function did not fail,
+You can also return `Ok()` to indicate that the function did not fail,
 however this function does take an argument:
 
 ```pawn
@@ -107,9 +110,9 @@ Error:temperature(input) {
         return Error(1, "Too hot to survive!");
     }
     if(input > 50) {
-        return NoError(2); // can survive, but too hot to go outside
+        return Ok(2); // can survive, but too hot to go outside
     }
-    return NoError(); // it's cool
+    return Ok(); // it's cool
 }
 ```
 
@@ -147,14 +150,14 @@ stock Error:LoadPlayerAccount(playerid, file[], fileData[]) {
     }
 
     if(fileData[E_PLAYER_BANNED]) {
-        return NoError(2); // player is banned, no point doing more work
+        return Ok(2); // player is banned, no point doing more work
     }
 
     // do some processing on the player's account now that we know that
     // 1. it's not corrupt
     // 2. they are not banned
 
-    return NoError(); // default value is 0
+    return Ok(); // default value is 0
 }
 ```
 
