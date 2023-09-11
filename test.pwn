@@ -9,7 +9,7 @@ Error:failsOnTrue(bool:fails) {
 		return Error(1, "i failed :(");
 	}
 
-	return NoError();
+	return Ok();
 }
 
 Error:failsOn5(input) {
@@ -23,7 +23,7 @@ Error:failsOn5(input) {
 		return Error(1);
 	}
 
-	return NoError();
+	return Ok();
 }
 
 Error:failsOnOdd(input) {
@@ -37,18 +37,18 @@ Error:failsOnOdd(input) {
 		return Error(1, "value was not odd");
 	}
 
-	return NoError();
+	return Ok();
 }
 
 Error:failsOn5WarnsOn6(input) {
 	if(input == 6) {
-		return NoError(2);
+		return Ok(2);
 	}
 	if(input == 5) {
 		return Error(1, "function incomplete, can not continue");
 	}
 
-	return NoError();
+	return Ok();
 }
 
 Test:ErrorDepth1() {
