@@ -34,6 +34,10 @@
 // fails to do what it should.
 forward Error:Error(code, const what[] = "");
 
+// Ok should be called and the return value returned from any function that
+// did not fail but exited with some semantic error code.
+forward Error:Ok(code = 0);
+
 // NoError should be called and the return value returned from any function that
 // did not fail but exited with some semantic error code.
 forward Error:NoError(code = 0);
@@ -129,6 +133,11 @@ public _errors_resolveUnhandled() {
     Count = 0;
 }
 
+stock Error:Ok(code = 0) {
+    return Error: code;
+}
+
+#pragma deprecated Use Ok instead
 stock Error:NoError(code = 0) {
     return Error:code;
 }
